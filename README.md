@@ -57,15 +57,16 @@ It shows how secure communication can be implemented using chaotic systems, but 
 
 ## 🧠 How It Works
 
-1. Run app.py
-2. Copy flask server link
-3. Opens the web browser
-4. Paste link and Connects to Flask server
-5. Boom you got it run and now explore
-6. signup and login
-7. To Sends messages search user name of user to send message and he will add into your dashboard like whatsapp
-8. Server processes and forwards messages
-9. Messages are encrypted before sending
+1. Before run create a newfolder in the clone repo with name "templates" and copy "admin.html, dashboard.html, signupp.html and login.html" to this folder.
+2. Run app.py
+3. Copy flask server link
+4. Opens the web browser
+5. Paste link and Connects to Flask server
+6. Boom you got it run and now explore
+7. signup and login
+8. To Sends messages search user name of user to send message and he will add into your dashboard like whatsapp
+9. Server processes and forwards messages
+10. Messages are encrypted before sending
 
 
 ## ▶️ How to Run
