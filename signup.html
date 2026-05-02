@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>SecureChat | Create System Account</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"/>
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); height: 100vh; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .glass-card { background: rgba(255, 255, 255, 0.95); padding: 35px; border-radius: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.3); width: 450px; }
+        h2 { color: #1e3c72; margin-bottom: 20px; text-align: center; font-weight: 800; }
+        .input-group { margin-bottom: 15px; }
+        label { font-size: 12px; font-weight: 600; color: #555; margin-left: 5px; }
+        input { width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #ddd; border-radius: 8px; outline: none; transition: 0.3s; }
+        input:focus { border-color: #1e3c72; box-shadow: 0 0 8px rgba(30,60,114,0.2); }
+        .strength-meter { height: 4px; background: #eee; margin-top: 5px; border-radius: 2px; overflow: hidden; }
+        .strength-bar { height: 100%; width: 0%; transition: 0.5s; }
+        .primary-btn { width: 100%; padding: 12px; background: #1e3c72; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; margin-top: 15px; }
+        .primary-btn:hover { background: #152e5a; transform: scale(1.01); }
+        .footer { text-align: center; margin-top: 15px; font-size: 13px; }
+        .link { color: #1e3c72; text-decoration: none; font-weight: 700; }
+    </style>
+</head>
+<body>
+
+<div class="glass-card animate__animated animate__zoomIn">
+    <h2>Join SecureChat</h2>
+    <form id="signupForm">
+        <div class="input-group">
+            <label>Choose Username</label>
+            <input type="text" name="username" id="user" placeholder="e.g. cyber_pro" required>
+        </div>
+        <div class="input-group">
+            <label>Secure Password (8+ chars, mix of A-z, 0-9)</label>
+            <input type="password" name="password" id="pass" oninput="checkStrength(this.value)" required>
+            <div class="strength-meter"><div id="sBar" class="strength-bar"></div></div>
+        </div>
+        <hr style="margin: 15px 0; opacity: 0.3;">
+        <p style="font-size: 11px; color: #777; margin-bottom: 10px;">Security Questions (For Password Recovery)</p>
+        <div class="input-group">
+            <input type="text" name="q1" placeholder="What is your childhood nickname?" required>
+        </div>
+        <div class="input-group">
+            <input type="text" name="q2" placeholder="Who is your best friend?" required>
+        </div>
+        <button type="submit" class="primary-btn">Create Account</button>
+    </form>
+    <div class="footer">
+        Already have a system ID? <a href="/" class="link">Sign In</a>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+<script>
+    function checkStrength(p) {
+        let bar = document.getElementById('sBar');
+        let strength = 0;
+        if (p.length >= 8) strength += 40;
+        if (/[0-9]/.test(p)) strength += 30;
+        if (/[A-Z]/.test(p)) strength += 30;
+        
+        bar.style.width = strength + "%";
+        bar.style.backgroundColor = strength < 40 ? "#ff4d4d" : strength < 80 ? "#ffd93d" : "#4ade80";
+    }
+
+    document.getElementById('signupForm').onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        
+        const res = await fetch('/signup', { 
+            method: 'POST', 
+            body: formData 
+        });
+        
+        const data = await res.json();
+        if (data.status === 'success') {
+            Toastify({ text: data.message, style: { background: "#28a745" } }).showToast();
+            setTimeout(() => window.location.href = '/', 2000);
+        } else {
+            Toastify({ text: data.message, style: { background: "#dc3545" } }).showToast();
+        }
+    };
+
+    
+</script>
+</body>
+</html>

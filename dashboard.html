@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SecureChat | Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <style>
+        :root { --primary: #0095f6; --bg: #fafafa; --border: #dbdbdb; --text: #262626; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, system-ui, "Segoe UI", Roboto; }
+        
+        body { background: var(--bg); display: flex; height: 100vh; overflow: hidden; }
+
+        /* Sidebar Navigation */
+        .nav-sidebar { width: 250px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 20px 0; }
+        .nav-sidebar h2 { padding: 0 20px 30px; font-style: italic; color: var(--text); }
+        .nav-item { padding: 15px 20px; display: flex; align-items: center; gap: 15px; cursor: pointer; color: var(--text); text-decoration: none; transition: 0.2s; }
+        .nav-item:hover { background: #f8f9fa; }
+        .nav-item i { font-size: 1.2rem; }
+
+        /* User List Panel */
+        .chat-list-panel { width: 350px; background: white; border-right: 1px solid var(--border); display: flex; flex-direction: column; }
+        .search-area { padding: 20px; border-bottom: 1px solid #efefef; }
+        .search-area input { width: 100%; padding: 10px; border-radius: 8px; border: 1px solid var(--border); outline: none; background: #efefef; }
+        .user-item { padding: 15px 20px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: 0.2s; border-bottom: 1px solid #fcfcfc; }
+        .user-item:hover { background: #fafafa; }
+        .avatar { width: 45px; height: 45px; background: linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; }
+
+        /* Chat Area */
+        .chat-area { flex: 1; display: flex; flex-direction: column; background: white; }
+        .chat-header { height: 65px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; }
+
+        
+        .messages-box { flex: 1; padding: 20px; overflow-y: auto; background: #fff; display: flex; flex-direction: column; gap: 10px; }
+    
+
+        .bubble { max-width: 65%; padding: 10px 15px; border-radius: 20px; font-size: 14px; cursor: pointer; line-height: 1.4; }
+        .sent { align-self: flex-end; background: #efefef; color: black; }
+        .received { align-self: flex-start; border: 1px solid var(--border); background: white; }
+        .decrypting { background: #000 !important; color: #00ff41 !important; font-family: monospace; border: 1px solid #00ff41; }
+        /* Input Bar */
+        .input-bar { padding: 20px; border-top: 1px solid var(--border); }
+        .input-group { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 25px; padding: 5px 15px; }
+        .input-group input { flex: 1; border: none; padding: 10px; outline: none; }
+        .send-btn { color: var(--primary); font-weight: bold; border: none; background: none; cursor: pointer; }
+
+        /* Key Session Badges */
+        .badge { font-size: 10px; padding: 4px 10px; border-radius: 12px; background: #f0f0f0; color: #666; font-weight: 600; }
+
+        /* Modal Styles */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        .key-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 15px 0; }
+        .key-grid input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 5px; font-size: 12px; }
+
+        .user-profile {
+    border: 1px solid rgba(255,255,255,0.1);
+    transition: 0.3s;
+}
+
+.user-profile:hover {
+    background: rgba(255,255,255,0.15);
+}
+    </style>
+</head>
+<body>
+
+    <div class="nav-sidebar">
+        <h2>SecureChat</h2>
+        <a href="/dashboard" class="nav-item"><i class="fa-solid fa-house"></i> Home</a>
+        <div class="nav-item" onclick="openKeyModal('my_keys')"><i class="fa-solid fa-lock-open"></i> Decryption Keys</div>
+        <div class="nav-item" onclick="openKeyModal('send_keys')"><i class="fa-solid fa-lock"></i> Encryption Keys</div>
+        
+        {% if session['role'] == 'admin' %}
+        <a href="/admin_panel" class="nav-item" style="color: #dc3545;"><i class="fa-solid fa-user-shield"></i> Admin Panel</a>
+        {% endif %}
+
+        <div class="user-profile" style="margin-top: auto; padding: 15px 20px; border-top: 1px solid var(--border); background: #fcfcfc;">
+    <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="avatar" style="width: 35px; height: 35px; font-size: 14px;">
+            {{ session['username'][0]|upper }}
+        </div>
+        <div style="overflow: hidden;">
+            <p style="font-size: 11px; color: #8e8e8e; text-transform: uppercase; margin: 0;">Logged in as</p>
+            <p style="font-size: 15px; color: var(--text); font-weight: 600; margin: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                {{ session['username'] }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<a href="/logout" class="nav-item" style="border-top: 1px solid #efefef; color: #dc3545;">
+    <i class="fa-solid fa-right-from-bracket"></i> Logout
+</a>
+        
+        
+    </div>
+
+    <div class="chat-list-panel">
+        <div class="search-area">
+            <input type="text" id="userInput" placeholder="Search users..." onkeyup="if(event.key === 'Enter') searchUser()">
+        </div>
+        <div id="userList">
+            {% for chat in active_chats %}
+            <div class="user-item" onclick="loadChat('{{ chat }}')">
+                <div class="avatar">{{ chat[0]|upper }}</div>
+                <div><b>{{ chat }}</b><br><small style="color:gray">Click to chat</small></div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="chat-area">
+        <div id="chatPlaceholder" style="flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center; color: #8e8e8e;">
+            <i class="fa-regular fa-paper-plane" style="font-size: 60px; margin-bottom: 20px;"></i>
+            <h3>Your Private Conversations</h3>
+            <p>Select a user to start chatting securely.</p>
+        </div>
+
+        <div id="chatWindow" style="display:none; flex:1; flex-direction:column;">
+            <div class="chat-header">
+                <b id="activeChatName">Username</b>
+                <div style="display:flex; gap:10px">
+                    <span id="myExpiry" class="badge">My Key: Expired</span>
+                    <span id="sendExpiry" class="badge">Send Key: Expired</span>
+                </div>
+            </div>
+            <div class="messages-box" id="chatBox"></div>
+            
+            <div class="input-bar">
+            <div id="manualArea" style="background: #f1f1f1; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px dashed #ccc;">
+                <p style="font-size: 11px; color: #d93025; font-weight: bold; margin-bottom: 8px;">
+                    <i class="fa-solid fa-triangle-exclamation"></i> No Active Session. Enter Manual Encryption Parameters:
+                </p>
+                <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px;">
+                    <input type="number" step="any" class="mKey" placeholder="u (Control)">
+                    <input type="number" step="any" class="mKey" placeholder="xL (Initial)">
+                    <input type="number" step="any" class="mKey" placeholder="b (Param)">
+                    <input type="number" step="any" class="mKey" placeholder="xG (Initial)">
+                    <input type="number" step="any" class="mKey" placeholder="y (Control)">
+                    <input type="number" step="any" class="mKey" placeholder="xT (Initial)">
+                    <input type="number" step="any" class="mKey" placeholder="a (Param)">
+                    <input type="number" step="any" class="mKey" placeholder="xS (Initial)">
+                </div>
+            </div>
+
+            <div class="input-group">
+                <input type="text" id="messageInput" placeholder="Write your encrypted message...">
+                <button class="send-btn" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="keyModal" class="modal">
+        <div class="modal-content">
+            <h3 id="modalTitle">Set Keys</h3>
+            <div class="key-grid">
+                <input type="number" step="any" id="ku" placeholder="u">
+                <input type="number" step="any" id="kxL" placeholder="xL">
+                <input type="number" step="any" id="kb" placeholder="b">
+                <input type="number" step="any" id="kxG" placeholder="xG">
+                <input type="number" step="any" id="ky" placeholder="y">
+                <input type="number" step="any" id="kxT" placeholder="xT">
+                <input type="number" step="any" id="ka" placeholder="a">
+                <input type="number" step="any" id="kxS" placeholder="xS">
+            </div>
+            <p style="font-size:12px; margin-bottom:10px">Duration (Max 20 mins): <input type="number" id="kDuration" value="5" max="20" style="width:50px"></p>
+            <button onclick="saveKeys()" style="width:100%; padding:10px; background:var(--primary); color:white; border:none; border-radius:5px; cursor:pointer">Activate Session</button>
+            <button onclick="closeModal()" style="width:100%; margin-top:5px; background:none; border:none; color:gray; cursor:pointer">Cancel</button>
+        </div>
+    </div>
+
+    <div id="decryptModal" class="modal">
+    <div class="modal-content">
+        <h3 style="color: #dc3545; margin-bottom: 15px;"><i class="fa-solid fa-unlock"></i> Manual Decryption</h3>
+        <p style="font-size: 12px; color: #666; margin-bottom: 15px;">Session expired. Enter your 8 decryption parameters to reveal this message:</p>
+        <div class="key-grid">
+            <input type="number" step="any" id="d_ku" placeholder="u">
+            <input type="number" step="any" id="d_kxL" placeholder="xL">
+            <input type="number" step="any" id="d_kb" placeholder="b">
+            <input type="number" step="any" id="d_kxG" placeholder="xG">
+            <input type="number" step="any" id="d_ky" placeholder="y">
+            <input type="number" step="any" id="d_kxT" placeholder="xT">
+            <input type="number" step="any" id="d_ka" placeholder="a">
+            <input type="number" step="any" id="d_kxS" placeholder="xS">
+        </div>
+        <button onclick="submitManualDecryption()" style="width:100%; padding:12px; background:#dc3545; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">Decrypt Message</button>
+        <button onclick="closeDecryptModal()" style="width:100%; margin-top:10px; background:none; border:none; color:gray; cursor:pointer;">Cancel</button>
+    </div>
+</div>
+
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script>
+        let currentReceiver = "";
+        let currentMode = "";
+        let sessions = { my_keys: false, send_keys: false };
+
+        // 1. Fixed Search Logic
+        async function searchUser() {
+    let username = document.getElementById('userInput').value.trim();
+    if(!username) {
+        Toastify({text: "Please enter a username", style: {background: "#ff9800"}}).showToast();
+        return;
+    }
+    
+    try {
+        const res = await fetch('/search_user', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({username: username})
+        });
+        const data = await res.json();
+        
+        if(data.status === 'success') {
+            const list = document.getElementById('userList');
+            
+            // Agar user pehle se list mein nahi hai to add karein
+            if(!list.innerHTML.includes(`'${data.username}'`)) {
+                let newUserHTML = `
+                    <div class="user-item" onclick="loadChat('${data.username}')">
+                        <div class="avatar">${data.username[0].toUpperCase()}</div>
+                        <div><b>${data.username}</b><br><small style="color:green">Found</small></div>
+                    </div>`;
+                list.innerHTML = newUserHTML + list.innerHTML;
+            }
+            loadChat(data.username);
+            Toastify({text: "User found!", style: {background: "#28a745"}}).showToast();
+        } else {
+            // Agar user nahi milta to yahan error show hoga
+            Toastify({text: data.message, style: {background: "#dc3545"}}).showToast();
+        }
+    } catch (err) {
+        console.error("Search Error:", err);
+        Toastify({text: "Server error occurred", style: {background: "#000"}}).showToast();
+            }
+        }
+
+        // 2. Chat Loading
+        function loadChat(name) {
+            currentReceiver = name;
+            document.getElementById('chatPlaceholder').style.display = 'none';
+            document.getElementById('chatWindow').style.display = 'flex';
+            document.getElementById('activeChatName').innerText = "@" + name;
+            fetchChat();
+        }
+
+        // 3. Modal Controls
+        function openKeyModal(mode) {
+            currentMode = mode;
+            document.getElementById('modalTitle').innerText = mode === 'my_keys' ? "My Decryption Keys" : "Target's Encryption Keys";
+            document.getElementById('keyModal').style.display = 'flex';
+        }
+
+        function closeModal() { document.getElementById('keyModal').style.display = 'none'; }
+
+        async function saveKeys() {
+            let ids = ['ku','kxL','kb','kxG','ky','kxT','ka','kxS'];
+            let params = ids.map(id => document.getElementById(id).value);
+            let dur = document.getElementById('kDuration').value;
+
+            const res = await fetch('/set_temp_session', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({mode: currentMode, params: params, duration: dur})
+            });
+            const data = await res.json();
+            
+            if(data.status === 'success') {
+                closeModal();
+                startTimer(currentMode, data.expiry);
+                Toastify({text: "Session Activated!", style: {background: "#28a745"}}).showToast();
+            }
+        }
+
+        // Timer function jo check karega session hai ya nahi
+function startTimer(mode, expiry) {
+    let targetId = mode === 'my_keys' ? 'myExpiry' : 'sendExpiry';
+    let interval = setInterval(() => {
+        let now = Math.floor(Date.now() / 1000);
+        let diff = expiry - now;
+
+        if (diff <= 0) {
+            document.getElementById(targetId).innerText = "Expired";
+            document.getElementById(targetId).style.color = "red";
+            sessions[mode] = false;
+
+            // Agar Send Key session expire hua toh Manual Area dikhao
+            if (mode === 'send_keys') {
+                document.getElementById('manualArea').style.display = 'block';
+            }
+            clearInterval(interval);
+        } else {
+            document.getElementById(targetId).innerText = `Active: ${Math.floor(diff/60)}m ${diff%60}s`;
+            document.getElementById(targetId).style.color = "green";
+            sessions[mode] = true;
+
+            // Agar Session active hai toh manual ki zaroorat nahi
+            if (mode === 'send_keys') {
+                document.getElementById('manualArea').style.display = 'none';
+            }
+        }
+    }, 1000);
+}
+
+// Message bhejne ki logic
+async function sendMessage() {
+    let msgInput = document.getElementById('messageInput');
+    let msg = msgInput.value.trim();
+    
+    if (!currentReceiver) {
+        Toastify({text: "Please select a user first!", style: {background: "#dc3545"}}).showToast();
+        return;
+    }
+    if (!msg) return;
+
+    let formData = new FormData();
+    formData.append('receiver', currentReceiver);
+    formData.append('message', msg);
+
+    // Agar session active nahi hai toh manual inputs bhejo
+    if (!sessions.send_keys) {
+        let mKeyElements = document.querySelectorAll('.mKey');
+        let keysArray = Array.from(mKeyElements).map(input => input.value.trim());
+
+        if (keysArray.some(k => k === "")) {
+            Toastify({text: "Fill all 8 manual keys or set a session!", style: {background: "#dc3545"}}).showToast();
+            return;
+        }
+        formData.append('manual_params', keysArray.join(','));
+    }
+
+    try {
+        const res = await fetch('/send_msg', { 
+            method: 'POST', 
+            body: formData 
+        });
+        const data = await res.json();
+        
+        if (data.status === 'success') {
+            msgInput.value = ""; // Clear input
+            fetchChat(); // Refresh chat box
+            Toastify({text: "Sent!", duration: 1000, style: {background: "#28a745"}}).showToast();
+        } else {
+            Toastify({text: data.message, style: {background: "#dc3545"}}).showToast();
+        }
+    } catch (err) {
+        console.error(err);
+        Toastify({text: "Connection error!", style: {background: "#000"}}).showToast();
+    }
+}
+
+    let lastMessageCount = 0; // Global variable to track message count
+
+async function fetchChat() {
+    if(!currentReceiver) return;
+    const res = await fetch('/fetch_chat/' + currentReceiver);
+    const data = await res.json();
+    let box = document.getElementById('chatBox');
+    
+    const myName = "{{ session.username }}"; 
+    
+    // --- Notification Logic Start ---
+    if (data.length > lastMessageCount) {
+        let lastMsg = data[data.length - 1];
+        
+        // Agar aakhri message mujhe aya hai aur main chat dekh raha hoon
+        if (lastMsg.sender !== myName && lastMessageCount !== 0) {
+            Toastify({
+                text: `📩 New message from ${lastMsg.sender}`,
+                duration: 4000,
+                close: true,
+                gravity: "top", 
+                position: "right", 
+                style: { background: "linear-gradient(to right, #00b09b, #96c93d)" },
+                onClick: function(){} // Callback after click
+            }).showToast();
+            
+            // Notification sound (Optional: niche di gayi line ko uncomment karein agar sound chahiye)
+            // new Audio('https://actions.google.com/sounds/v1/notifications/done.ogg').play();
+        }
+    }
+    lastMessageCount = data.length;
+    // --- Notification Logic End ---
+
+    box.innerHTML = data.map(m => {
+        const sideClass = m.sender === myName ? 'sent' : 'received';
+        return `
+            <div id="msg-${m.id}" class="bubble ${sideClass}" 
+                 onclick="revealMessage(${m.id}, '${m.content}')">
+                ${m.content}
+            </div>
+        `;
+    }).join('');
+    
+    box.scrollTop = box.scrollHeight;
+}
+
+        let pendingMsgId = null; // Jo message decrypt hona hai uski ID save karne ke liye
+
+async function revealMessage(id, originalContent) {
+    // Agar session active hai, to seedha decrypt karein
+    if (sessions.my_keys) {
+        processDecryption(id, null);
+    } else {
+        // Agar session nahi hai, to alert ki jagah Modal kholain
+        pendingMsgId = id;
+        document.getElementById('decryptModal').style.display = 'flex';
+    }
+}
+
+function closeDecryptModal() {
+    document.getElementById('decryptModal').style.display = 'none';
+    pendingMsgId = null;
+}
+
+// Modal se values nikaal kar decrypt karne wala function
+async function submitManualDecryption() {
+    const ids = ['d_ku','d_kxL','d_kb','d_kxG','d_ky','d_kxT','d_ka','d_kxS'];
+    const params = ids.map(id => document.getElementById(id).value.trim());
+
+    if (params.some(p => p === "")) {
+        Toastify({text: "Please fill all 8 decryption keys!", style: {background: "#dc3545"}}).showToast();
+        return;
+    }
+
+    processDecryption(pendingMsgId, params.join(','));
+    closeDecryptModal();
+}
+
+// Common function jo backend ko request bhejega
+async function processDecryption(msgId, manualParams) {
+    const res = await fetch('/decrypt_single_msg', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({
+            msg_id: msgId, 
+            manual_params: manualParams
+        })
+    });
+    
+    const data = await res.json();
+    
+    if (data.status === 'success') {
+        let el = document.getElementById('msg-' + msgId);
+        let originalContent = el.innerText; // Current encrypted text save karein
+        
+        el.innerText = data.plaintext;
+        el.classList.add('decrypting');
+        
+        // 10 second baad wapas encrypt kar dein security ke liye
+        setTimeout(() => {
+            el.innerText = originalContent;
+            el.classList.remove('decrypting');
+        }, 10000);
+        
+        Toastify({text: "Message decrypted!", style: {background: "#28a745"}}).showToast();
+    } else if (data.status === 'need_keys') {
+        // Case: Server says keys required but modal was missed
+        pendingMsgId = msgId;
+        document.getElementById('decryptModal').style.display = 'flex';
+    } else {
+        Toastify({text: data.message || "Invalid Keys!", style: {background: "#dc3545"}}).showToast();
+    }
+}
+        setInterval(fetchChat, 5000);
+    </script>
+</body>
+</html>

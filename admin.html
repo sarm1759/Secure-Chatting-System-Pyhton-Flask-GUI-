@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Control Center</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 30px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 15px; margin-bottom: 20px; }
+        .add-box { background: #f8f9fa; padding: 20px; border-radius: 10px; margin-bottom: 25px; border: 1px solid #ddd; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #eee; }
+        .btn { padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 13px; font-weight: bold; cursor: pointer; border: none; display: inline-block; }
+        .btn-add { background: #0095f6; color: white; }
+        .btn-ban { background: #ff9800; color: white; margin-right: 5px; }
+        .btn-del { background: #ff4d4d; color: white; }
+        .btn-ok { background: #28a745; color: white; margin-right: 5px; }
+        .status { font-weight: bold; font-size: 12px; padding: 4px 8px; border-radius: 4px; }
+        input { padding: 10px; border: 1px solid #ddd; border-radius: 5px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2><i class="fa-solid fa-user-shield"></i> SecureChat Admin Panel</h2>
+            <div style="display: flex; gap: 15px; align-items: center;">
+                <a href="/dashboard" style="text-decoration:none; color: #0095f6; font-weight:bold;">User View</a>
+                <a href="/logout" style="color: #666; text-decoration:none;"><i class="fa-solid fa-right-from-bracket"></i> Logout</a>
+            </div>
+        </div>
+
+        <div class="add-box">
+            <h4 style="margin-bottom:10px;">Add New Secure User</h4>
+            <form action="/admin/add_user" method="POST" style="display:flex; gap:10px;">
+                <input type="text" name="username" placeholder="New Username" required style="flex:1;">
+                <input type="password" name="password" placeholder="New Password" required style="flex:1;">
+                <button type="submit" class="btn btn-add">Create User</button>
+            </form>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Username</th>
+                    <th>Role</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for u in users %}
+                <tr>
+                    <td><b>{{ u.username }}</b></td>
+                    <td><span style="color: #666;">{{ u.role.upper() }}</span></td>
+                    <td>
+                        {% if u.lock_until and u.lock_until > now %}
+                        <span class="status" style="background: #ffe3e3; color:red;">BLACKLISTED</span>
+                        {% else %}
+                        <span class="status" style="background: #e3ffed; color:green;">ACTIVE</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if u.role != 'admin' %}
+                            {% if u.lock_until and u.lock_until > now %}
+                            <a href="/admin/unblacklist/{{ u.id }}" class="btn btn-ok"><i class="fa-solid fa-unlock"></i> Unblock</a>
+                            {% else %}
+                            <a href="/admin/blacklist/{{ u.id }}" class="btn btn-ban"><i class="fa-solid fa-ban"></i> Blacklist</a>
+                            {% endif %}
+                            <a href="/delete_user/{{ u.id }}" class="btn btn-del" onclick="return confirm('Delete permanently?')"><i class="fa-solid fa-trash"></i></a>
+                        {% else %}
+                        <span style="color:#aaa; font-style:italic;">Protected System Account</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</body>
+</html>
