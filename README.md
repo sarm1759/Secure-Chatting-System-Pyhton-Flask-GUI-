@@ -68,6 +68,12 @@ It shows how secure communication can be implemented using chaotic systems, but 
 9. Server processes and forwards messages
 10. Messages are encrypted before sending
 
+<img width="3262" height="1958" alt="image" src="https://github.com/user-attachments/assets/a438d77a-083b-4971-9357-ea3f8295bc3b" />
+
+<img width="3272" height="1962" alt="image" src="https://github.com/user-attachments/assets/62d4069e-6b81-4d37-9a55-84c32e98c9da" />
+
+<img width="3360" height="2100" alt="image" src="https://github.com/user-attachments/assets/11223c81-caf7-4b5e-adeb-8329f9b76048" />
+
 
 ## ▶️ How to Run
 
